@@ -1,16 +1,68 @@
-<!doctype html>
-<html lang="id">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Portal Sekolah — Live QR Scanner</title>
-<style>body{margin:0;background:#071b3a;color:#fff;font-family:Arial,sans-serif} .wrap{max-width:560px;margin:auto;padding:18px}.card{background:#fff;color:#10213f;border-radius:24px;padding:18px;box-shadow:0 20px 50px #0006}.stage{position:relative;aspect-ratio:1/1;background:#000;border-radius:20px;overflow:hidden}.stage video{width:100%;height:100%;object-fit:cover}.scan{position:absolute;inset:15%;border:3px solid #fff;border-radius:18px;box-shadow:0 0 0 999px #0005}.scan:after{content:"";position:absolute;left:5%;right:5%;top:50%;height:3px;background:#e21b23;box-shadow:0 0 15px #e21b23;animation:line 1.6s linear infinite}@keyframes line{0%{transform:translateY(-120px)}50%{transform:translateY(120px)}100%{transform:translateY(-120px)}}button{width:100%;padding:14px;border:0;border-radius:14px;background:#1749c6;color:#fff;font-weight:800;margin-top:12px}#status{text-align:center;font-weight:700;margin:12px 0}.hint{font-size:13px;color:#66758e;text-align:center}</style>
-</head>
-<body><div class="wrap"><div class="card"><h2 style="margin-top:0">SCAN QR ABSENSI</h2><div class="stage"><video id="video" autoplay muted playsinline></video><div class="scan"></div></div><div id="status">MEMBUKA KAMERA…</div><div class="hint">Arahkan kotak putih ke QR guru/admin. Scanner akan fokus dan membaca otomatis.</div><button id="start">AKTIFKAN KAMERA</button></div></div>
-<script>
-const video=document.getElementById('video'),status=document.getElementById('status'),start=document.getElementById('start');let stream=null,detector=null,running=false;
-async function scan(){if(!running)return;try{if(detector){const codes=await detector.detect(video);if(codes.length&&codes[0].rawValue){send(codes[0].rawValue);return}}else if(window.jsQR){const c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});c.width=video.videoWidth;c.height=video.videoHeight;x.drawImage(video,0,0,c.width,c.height);const r=jsQR(x.getImageData(0,0,c.width,c.height).data,c.width,c.height,{inversionAttempts:'attemptBoth'});if(r&&r.data){send(r.data);return}}}catch(e){console.warn(e)}requestAnimationFrame(scan)}
-function send(token){running=false;status.textContent='QR TERDETEKSI — MENGIRIM…';if(window.opener&&!window.opener.closed){window.opener.postMessage({type:'PORTAL_QR_RESULT',token:String(token)},'*');setTimeout(()=>window.close(),350)}}
-async function startCam(){try{if(stream)stream.getTracks().forEach(t=>t.stop());stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},focusMode:'continuous'},audio:false});video.srcObject=stream;await video.play();status.textContent='KAMERA AKTIF — SCAN QR…';if('BarcodeDetector'in window){try{const f=await BarcodeDetector.getSupportedFormats();if(f.includes('qr_code'))detector=new BarcodeDetector({formats:['qr_code']})}catch(e){}}if(!detector){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';s.onload=()=>{running=true;requestAnimationFrame(scan)};s.onerror=()=>{status.textContent='LIBRARY QR GAGAL DIMUAT'};document.head.appendChild(s)}else{running=true;requestAnimationFrame(scan)}}catch(e){status.textContent='KAMERA GAGAL: '+(e.name||e.message);}}
-start.addEventListener('click',startCam);startCam();window.addEventListener('beforeunload',()=>{if(stream)stream.getTracks().forEach(t=>t.stop())});
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ABSENSI SELFIE — PKBM Tunas Bhakti</title><style>:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#10213f;background:#071b3a}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(145deg,#061735,#0d2f68);padding:18px}.wrap{width:min(100%,560px);margin:auto}.card{background:#fff;border-radius:28px;overflow:hidden;box-shadow:0 24px 70px #0007}.head{padding:22px 22px 16px;background:linear-gradient(135deg,#0d47c7,#1769e8);color:#fff}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;opacity:.8}.head h1{margin:7px 0 4px;font-size:24px}.head p{margin:0;font-size:13px;opacity:.9}.body{padding:18px}.stage{position:relative;aspect-ratio:3/4;background:#050b16;border-radius:22px;overflow:hidden}.stage video,.stage img{width:100%;height:100%;object-fit:cover;display:block}.stage img{transform:scaleX(-1)}.guide{position:absolute;inset:12% 15%;border:2px solid #fff;border-radius:48% 48% 42% 42%;box-shadow:0 0 0 999px #0005}.qr-guide{position:absolute;inset:16%;border:3px solid #fff;border-radius:18px;box-shadow:0 0 0 999px #0005}.qr-guide:after{content:"";position:absolute;left:5%;right:5%;top:50%;height:3px;background:#fff;box-shadow:0 0 14px #fff;animation:line 1.6s linear infinite}@keyframes line{0%{transform:translateY(-100px)}50%{transform:translateY(100px)}100%{transform:translateY(-100px)}}.stage-msg{position:absolute;left:12px;right:12px;bottom:12px;padding:10px 12px;border-radius:12px;background:#0009;color:#fff;text-align:center;font-size:12px;font-weight:700}.preview{display:none}.status{min-height:42px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:13px;padding:10px}.hint{color:#66758e;text-align:center;font-size:12px;line-height:1.5;margin:8px 0 14px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}button{border:0;border-radius:14px;padding:14px 16px;font-weight:800;cursor:pointer;font-size:14px}button.primary{background:#1749c6;color:#fff}button.secondary{background:#edf2f8;color:#17304f}button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.error{color:#b42318}.success{color:#087443}@media(max-width:430px){body{padding:10px}.head{padding:18px}.body{padding:12px}.stage{aspect-ratio:4/5}.head h1{font-size:21px}}
+</style></head><body><div class="wrap"><div class="card"><div class="head"><div class="eyebrow">PKBM TUNAS BHAKTI</div><h1 id="title">ABSENSI SELFIE</h1><p id="subtitle">Ambil foto sebagai bukti kehadiran.</p></div><div class="body"><div class="stage"><video id="video" autoplay muted playsinline></video><img id="preview" class="preview" alt="Preview selfie"><div id="guide" class="guide"></div><div id="qrGuide" class="qr-guide hidden"></div><div id="stageMsg" class="stage-msg">Menyiapkan kamera...</div></div><div id="status" class="status">MEMBUKA KAMERA...</div><div id="hint" class="hint">Pastikan wajah terlihat jelas dan pencahayaan cukup.</div><div class="actions"><button id="primary" class="primary">AKTIFKAN KAMERA</button><button id="secondary" class="secondary">BATAL</button></div></div></div></div><script>window.CAMERA_MODE='SELFIE';</script><script>const qs=new URLSearchParams(location.search);
+const cameraToken=qs.get('token')||'';
+const MODE=(window.CAMERA_MODE||qs.get('mode')||'SELFIE').toUpperCase();
+const video=document.getElementById('video'),preview=document.getElementById('preview'),guide=document.getElementById('guide'),qrGuide=document.getElementById('qrGuide'),stageMsg=document.getElementById('stageMsg'),status=document.getElementById('status'),hint=document.getElementById('hint'),primary=document.getElementById('primary'),secondary=document.getElementById('secondary');
+let stream=null,detector=null,running=false,captured='';
+function stop(){running=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}if(video)video.srcObject=null;}
+function msg(t,cls){status.textContent=t||'';status.className='status '+(cls||'');stageMsg.textContent=t||'';}
+function back(){stop();if(window.opener&&!window.opener.closed)window.opener.postMessage({type:'PORTAL_CAMERA_CANCEL'},'*');setTimeout(()=>window.close(),100);}
+async function start(){
+  if(!cameraToken){msg('SESI KAMERA TIDAK VALID. KEMBALI KE PORTAL.','error');primary.disabled=true;return;}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){msg('BROWSER TIDAK MENDUKUNG AKSES KAMERA.','error');return;}
+  try{
+    stop();
+    const facing=MODE==='QR'?'environment':'user';
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},audio:false});
+    video.srcObject=stream;video.style.display='block';preview.style.display='none';await video.play();
+    if(MODE==='SELFIE'){
+      msg('KAMERA SELFIE AKTIF — POSISIKAN WAJAH DI DALAM PANDUAN.');
+      hint.textContent='Pastikan wajah terlihat jelas. Tekan AMBIL FOTO jika sudah siap.';
+      primary.textContent='📷 AMBIL FOTO';primary.disabled=false;primary.onclick=capture;
+      guide.classList.remove('hidden');qrGuide.classList.add('hidden');
+    }else{
+      msg('KAMERA QR AKTIF — ARAHKAN KE QR ABSENSI.');
+      hint.textContent='Scanner akan membaca QR permanen secara otomatis.';
+      guide.classList.add('hidden');qrGuide.classList.remove('hidden');
+      primary.textContent='SCANNER AKTIF';primary.disabled=true;await setupDetector();running=true;requestAnimationFrame(scan);
+    }
+  }catch(e){
+    const name=e&&e.name?e.name:'PermissionDenied';
+    msg('KAMERA TIDAK DAPAT DIBUKA: '+name,'error');
+    hint.textContent='Pastikan izin kamera browser sudah diizinkan untuk halaman HTTPS ini, lalu tekan COBA LAGI.';
+    primary.textContent='COBA LAGI';primary.disabled=false;primary.onclick=start;
+  }
+}
+async function setupDetector(){
+  if(!('BarcodeDetector' in window))return;
+  try{const f=await BarcodeDetector.getSupportedFormats();if(f.includes('qr_code'))detector=new BarcodeDetector({formats:['qr_code']});}catch(e){detector=null;}
+}
+async function scan(){
+  if(!running)return;
+  try{
+    if(!video.videoWidth){requestAnimationFrame(scan);return;}
+    if(detector){const codes=await detector.detect(video);if(codes.length&&codes[0].rawValue){running=false;sendQr(codes[0].rawValue);return;}}
+    else{
+      if(!window.jsQR)await loadJsQr();
+      if(window.jsQR){const c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});c.width=video.videoWidth;c.height=video.videoHeight;x.drawImage(video,0,0,c.width,c.height);const r=window.jsQR(x.getImageData(0,0,c.width,c.height).data,c.width,c.height,{inversionAttempts:'attemptBoth'});if(r&&r.data){running=false;sendQr(r.data);return;}}
+    }
+  }catch(e){}
+  requestAnimationFrame(scan);
+}
+function loadJsQr(){return new Promise((resolve,reject)=>{if(window.jsQR){resolve();return}const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s);});}
+function capture(){
+  if(!video.videoWidth){msg('KAMERA BELUM SIAP. TUNGGU SEBENTAR.','error');return;}
+  const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;c.getContext('2d').drawImage(video,0,0,c.width,c.height);
+  captured=c.toDataURL('image/jpeg',.86);preview.src=captured;preview.classList.remove('preview');preview.style.display='block';video.style.display='none';guide.classList.add('hidden');stop();
+  msg('PREVIEW FOTO SIAP — PERIKSA FOTO SEBELUM DIKIRIM.');hint.textContent='Jika foto sudah sesuai, tekan GUNAKAN FOTO.';
+  primary.disabled=false;primary.textContent='✓ GUNAKAN FOTO';primary.onclick=sendSelfie;secondary.textContent='↻ ULANGI';secondary.onclick=retake;
+}
+function retake(){captured='';preview.style.display='none';video.style.display='block';secondary.textContent='BATAL';secondary.onclick=back;primary.disabled=false;primary.textContent='AKTIFKAN KAMERA';primary.onclick=start;start();}
+function sendSelfie(){
+  if(!captured)return;primary.disabled=true;secondary.disabled=true;msg('MENGIRIM FOTO KE PORTAL...');
+  if(window.opener&&!window.opener.closed){window.opener.postMessage({type:'PORTAL_SELFIE_RESULT',cameraToken:cameraToken,image:captured},'*');setTimeout(()=>{msg('FOTO TERKIRIM. SILAKAN KEMBALI KE PORTAL.','success');window.close();},350);}else msg('HALAMAN PORTAL SUDAH TERTUTUP.','error');
+}
+function sendQr(value){stop();msg('QR TERBACA — MENGIRIM KE PORTAL...');if(window.opener&&!window.opener.closed){window.opener.postMessage({type:'PORTAL_QR_RESULT',cameraToken:cameraToken,token:String(value)},'*');setTimeout(()=>window.close(),350);}else msg('HALAMAN PORTAL SUDAH TERTUTUP.','error');}
+secondary.onclick=back;primary.onclick=start;
+window.addEventListener('beforeunload',stop);start();
 </script></body></html>
